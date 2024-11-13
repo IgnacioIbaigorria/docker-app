@@ -2,8 +2,7 @@
 from flask import Flask, request, jsonify
 from pytesseract import pytesseract
 from PIL import Image
-import base64
-from io import BytesIO
+import os
 
 app = Flask(__name__)
 
@@ -13,10 +12,13 @@ pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 @app.route('/extract_text', methods=['POST'])
 def extract_text():
     try:
-        # Obtener y decodificar la imagen en base64
-        data = request.get_json()
-        img_data = data.get('image_base64')
-        image = Image.open(BytesIO(base64.b64decode(img_data)))
+        # Verificar si se ha enviado un archivo
+        if 'image' not in request.files:
+            return jsonify({"error": "No se envió ningún archivo"}), 400
+
+        # Leer el archivo de imagen enviado
+        file = request.files['image']
+        image = Image.open(file)
 
         # Extraer texto con Tesseract OCR
         extracted_text = pytesseract.image_to_string(image)
