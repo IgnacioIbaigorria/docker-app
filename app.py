@@ -1,16 +1,19 @@
-# app.py
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from pytesseract import pytesseract
 from PIL import Image
 import os
 
 app = Flask(__name__)
+CORS(app)  # Habilita CORS para permitir peticiones externas
 
 # Configura la ruta de Tesseract en Docker
 pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 @app.route('/extract_text', methods=['POST'])
 def extract_text():
+    print("Solicitud recibida")
+    print("Archivos recibidos:", request.files)
     try:
         # Verificar si se ha enviado un archivo
         if 'image' not in request.files:
