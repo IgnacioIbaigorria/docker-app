@@ -1,13 +1,16 @@
 # app.py
 from flask import Flask, request, jsonify
-from pytesseract import pytesseract
-from PIL import Image
-import os
+from google.cloud import vision
+from google.oauth2 import service_account
+from io import BytesIO
 
 app = Flask(__name__)
 
-# Configura la ruta de Tesseract en Docker
-pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+# Inicializar el cliente de Google Cloud Vision
+credentials = service_account.Credentials.from_service_account_file(
+    "/app/plasma-system-441721-h5-e71c8d0472b7.json"
+)
+client = vision.ImageAnnotatorClient(credentials=credentials)
 
 @app.route('/extract_text', methods=['POST'])
 def extract_text():
@@ -18,11 +21,22 @@ def extract_text():
 
         # Leer el archivo de imagen enviado
         file = request.files['image']
-        image = Image.open(file)
+        image_content = file.read()
 
-        # Extraer texto con Tesseract OCR
-        extracted_text = pytesseract.image_to_string(image)
+        # Crear la imagen para Google Cloud Vision
+        image = vision.Image(content=image_content)
+
+        # Realizar la detección de texto
+        response = client.text_detection(image=image)
+        texts = response.text_annotations
+
+        # Extraer el texto principal si existe
+        extracted_text = texts[0].description if texts else ""
         print("Texto extraído:", extracted_text)
+
+        # Verificar si hubo errores en la respuesta
+        if response.error.message:
+            return jsonify({"error": response.error.message}), 500
 
         # Retornar el texto extraído
         return jsonify({"text": extracted_text}), 200
