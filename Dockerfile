@@ -1,11 +1,6 @@
 # Usa una imagen base de Python ligera
 FROM python:3.8-slim
 
-# Instala Tesseract OCR
-RUN apt-get update && \
-    apt-get install -y tesseract-ocr && \
-    rm -rf /var/lib/apt/lists/*
-
 # Configura el directorio de trabajo en el contenedor
 WORKDIR /app
 
@@ -14,6 +9,9 @@ COPY . /app
 
 # Instala las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Establece la variable de entorno para las credenciales de Google Cloud
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/plasma-system-441721-h5-e71c8d0472b7.json"
 
 # Expone el puerto 5000 para Flask
 EXPOSE 5000
